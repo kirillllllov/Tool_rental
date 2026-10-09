@@ -105,3 +105,42 @@ def test_negative_price_is_rejected(client):
         "condition": "Хорошее", "available": "on"
     }, follow_redirects=True)
     assert "не может быть отрицательным".encode() in response.data
+
+def test_rental_end_date_before_start_date_is_rejected(client):
+    seed_tool(client)
+    seed_customer(client)
+
+    response = client.post(
+        "/rentals/new",
+        data={
+            "tool_id": "1",
+            "customer_id": "1",
+            "start_date": "2026-10-20",
+            "end_date": "2026-10-10",
+            "status": "Забронирована",
+            "total_price": "800",
+            "notes": "Проверка некорректного периода",
+        },
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert "Дата окончания не может быть раньше даты начала".encode() in response.data
+
+
+def test_rental_required_fields_are_validated(client):
+    response = client.post(
+        "/rentals/new",
+        data={
+            "tool_id": "",
+            "customer_id": "",
+            "start_date": "",
+            "end_date": "",
+            "status": "",
+            "total_price": "",
+        },
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert "обязательно для заполнения".encode() in response.data
