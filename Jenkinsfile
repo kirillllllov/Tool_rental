@@ -12,15 +12,15 @@ pipeline {
 
         stage('Install dependencies') {
             steps {
-                sh 'python3 --version'
-                sh 'python3 -m pip install -r requirements.txt'
-                sh 'python3 -m pip install pytest'
+                bat 'python3 --version'
+                bat 'python3 -m pip install -r requirements.txt'
+                bat 'python3 -m pip install pytest'
             }
         }
 
         stage('Run tests') {
             steps {
-                sh 'python3 -m pytest -v'
+                bat 'python3 -m pytest -v'
             }
         }
     }
