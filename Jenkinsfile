@@ -1,33 +1,24 @@
+
 pipeline {
     agent any
-
-    options {
-        timestamps()
-        disableConcurrentBuilds()
-    }
 
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
-            }
-        }
-
-        stage('Check Python') {
-            steps {
-                // Для Windows-агента замените sh на bat.
-                sh 'python3 --version'
-                sh 'python3 -m pip --version'
+                echo 'Исходный код получен из GitHub'
             }
         }
 
         stage('Install dependencies') {
             steps {
+                sh 'python3 --version'
                 sh 'python3 -m pip install -r requirements.txt'
+                sh 'python3 -m pip install pytest'
             }
         }
 
-        stage('Automated tests') {
+        stage('Run tests') {
             steps {
                 sh 'python3 -m pytest -v'
             }
@@ -36,13 +27,10 @@ pipeline {
 
     post {
         success {
-            echo 'CI completed successfully.'
+            echo 'Сборка и тесты завершились успешно'
         }
         failure {
-            echo 'CI failed. Review the console output.'
-        }
-        always {
-            echo 'Pipeline finished.'
+            echo 'Ошибка сборки или тестирования'
         }
     }
 }
