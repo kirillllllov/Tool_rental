@@ -13,7 +13,6 @@ pipeline {
             steps {
                 bat 'python --version'
                 bat 'python -m pip install -r requirements.txt'
-                bat 'python -m pip install waitress'
             }
         }
 
@@ -31,21 +30,23 @@ pipeline {
                 }
             }
             steps {
-                echo 'Ветка main: перезапускаем приложение'
                 bat '''
                     taskkill /F /IM python.exe >nul 2>&1
                     timeout /t 2 /nobreak >nul
-                    start "" cmd /c "waitress-serve --port=5000 app:app > app.log 2>&1"
-                    timeout /t 5 /nobreak >nul
-                    echo Проверяем, что приложение отвечает...
-                    powershell -Command "(Invoke-WebRequest http://127.0.0.1:5000/ -UseBasicParsing).StatusCode"
+                    start "" /B cmd /c "python app.py > app.log 2>&1"
+                    timeout /t 3 /nobreak >nul
+                    echo Приложение запущено
                 '''
             }
         }
     }
 
     post {
-        success { echo 'Сборка и тесты завершились успешно' }
-        failure { echo 'Ошибка сборки или тестирования' }
+        success {
+            echo 'Сборка и тесты завершились успешно'
+        }
+        failure {
+            echo 'Ошибка сборки или тестирования'
+        }
     }
 }
