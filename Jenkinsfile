@@ -30,13 +30,14 @@ pipeline {
                 }
             }
             steps {
-                bat '''
-                    taskkill /F /IM python.exe >nul 2>&1
-                    ping -n 3 127.0.0.1 >nul
-                    start "ToolRental" cmd /c "python app.py > app.log 2>&1"
-                    ping -n 4 127.0.0.1 >nul
-                    echo Приложение запущено
-                '''
+                withEnv(['BUILD_ID=dontKillMe']) {
+                    bat '''
+                        taskkill /F /IM python.exe >nul 2>&1
+                        ping -n 3 127.0.0.1 >nul
+                        start "ToolRental" cmd /c "python app.py > app.log 2>&1"
+                        ping -n 4 127.0.0.1 >nul
+                    '''
+                }
             }
         }
     }
