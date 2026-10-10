@@ -24,7 +24,7 @@ pipeline {
 
         stage('Deploy to main') {
             when {
-                branch 'main'
+                expression { return env.GIT_BRANCH == 'origin/main' }
             }
             steps {
                 bat '''
