@@ -35,29 +35,9 @@ pipeline {
                 }
             }
             steps {
-                echo 'Останавливаем старое приложение...'
-                bat '''
-                    taskkill /F /IM python.exe >nul 2>&1
-                    ping -n 3 127.0.0.1 >nul
-                '''
-
-                echo 'Запускаем приложение через waitress...'
-                bat '''
-                    start "" /B cmd /c "waitress-serve --port=5000 app:app > app.log 2>&1"
-                    ping -n 6 127.0.0.1 >nul
-                '''
-
-                echo 'Health-check...'
-                bat '''
-                    curl -f -s -o nul http://127.0.0.1:5000/
-                    if errorlevel 1 (
-                        echo === Health-check FAILED ===
-                        echo --- app.log ---
-                        type app.log
-                        exit /b 1
-                    )
-                    echo Health-check OK
-                '''
+                bat 'nssm restart ToolRental'
+                bat 'ping -n 6 127.0.0.1 >nul'
+                bat 'curl -f -s -o nul http://127.0.0.1:5000/ || (echo Health-check FAILED & type service.err.log & exit /b 1)'
             }
         }
     }
