@@ -16,9 +16,9 @@ pipeline {
             steps {
                 bat '''
                     taskkill /F /IM python.exe >nul 2>&1
-                    timeout /t 2 /nobreak >nul
-                    start /B python app.py
-                    timeout /t 3 /nobreak >nul
+                    powershell -NoProfile -Command "Start-Sleep -Seconds 2"
+                    start /B python app.py > app.log 2>&1
+                    powershell -NoProfile -Command "Start-Sleep -Seconds 3"
                     echo Приложение запущено
                 '''
             }
