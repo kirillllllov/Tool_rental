@@ -33,8 +33,10 @@ pipeline {
                 withEnv(['BUILD_ID=dontKillMe']) {
                     bat '''
                         taskkill /F /IM python.exe >nul 2>&1
+                        timeout /t 2 /nobreak >nul
                         ping -n 3 127.0.0.1 >nul
                         start "ToolRental" cmd /c "python app.py > app.log 2>&1"
+                        timeout /t 2 /nobreak >nul
                         ping -n 4 127.0.0.1 >nul
                     '''
                 }
