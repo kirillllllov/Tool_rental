@@ -37,6 +37,8 @@ pipeline {
                     timeout /t 2 /nobreak >nul
                     start "" cmd /c "waitress-serve --port=5000 app:app > app.log 2>&1"
                     timeout /t 5 /nobreak >nul
+                    echo Проверяем, что приложение отвечает...
+                    powershell -Command "(Invoke-WebRequest http://127.0.0.1:5000/ -UseBasicParsing).StatusCode"
                 '''
             }
         }
