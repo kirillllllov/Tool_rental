@@ -7,7 +7,12 @@ pipeline {
         stage('Run tests') { steps { bat 'python -m pytest -v' } }
 
         stage('Deploy to main') {
-            when { branch 'main' }
+            when {
+                expression {
+                    def b = env.GIT_BRANCH ?: env.BRANCH_NAME ?: ''
+                    return b == 'main' || b == 'origin/main'
+                }
+            }
             steps {
                 bat '''
                     taskkill /F /IM python.exe >nul 2>&1
