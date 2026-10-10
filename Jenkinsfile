@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    environment {
+        APP_URL = 'http://127.0.0.1:5000/'
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -31,21 +35,42 @@ pipeline {
                 }
             }
             steps {
-                echo 'Ветка main: перезапускаем приложение'
+                echo 'Останавливаем старое приложение...'
                 bat '''
                     taskkill /F /IM python.exe >nul 2>&1
-                    timeout /t 2 /nobreak >nul
-                    start "" cmd /c "waitress-serve --port=5000 app:app > app.log 2>&1"
-                    timeout /t 5 /nobreak >nul
-                    echo Проверяем, что приложение отвечает...
-                    powershell -Command "(Invoke-WebRequest http://127.0.0.1:5000/ -UseBasicParsing).StatusCode"
+                    ping -n 3 127.0.0.1 >nul
+                '''
+
+                echo 'Запускаем приложение через waitress...'
+                bat '''
+                    start "" /B cmd /c "waitress-serve --port=5000 app:app > app.log 2>&1"
+                    ping -n 6 127.0.0.1 >nul
+                '''
+
+                echo 'Health-check...'
+                bat '''
+                    curl -f -s -o nul http://127.0.0.1:5000/
+                    if errorlevel 1 (
+                        echo === Health-check FAILED ===
+                        echo --- app.log ---
+                        type app.log
+                        exit /b 1
+                    )
+                    echo Health-check OK
                 '''
             }
         }
     }
 
     post {
-        success { echo 'Сборка и тесты завершились успешно' }
-        failure { echo 'Ошибка сборки или тестирования' }
+        success {
+            echo 'Сборка, тесты и деплой прошли успешно'
+        }
+        failure {
+            echo 'Пайплайн упал — см. логи выше'
+        }
+        always {
+            echo "Результат: ${currentBuild.currentResult}"
+        }
     }
 }
