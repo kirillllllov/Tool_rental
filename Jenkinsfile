@@ -24,12 +24,18 @@ pipeline {
 
         stage('Deploy to main') {
             when {
-                expression { return env.GIT_BRANCH == 'origin/main' }
+                expression {
+                    def b = env.GIT_BRANCH ?: env.BRANCH_NAME ?: ''
+                    return b == 'main' || b == 'origin/main'
+                }
             }
             steps {
                 bat '''
-                    taskkill /F /IM python.exe >nul 2>&1 || exit /b 0
+                    taskkill /F /IM python.exe >nul 2>&1
+                    timeout /t 2 /nobreak >nul
                     start /B python app.py
+                    timeout /t 3 /nobreak >nul
+                    echo Приложение запущено
                 '''
             }
         }
