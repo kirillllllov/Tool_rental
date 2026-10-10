@@ -1,4 +1,3 @@
-
 pipeline {
     agent any
 
@@ -14,13 +13,24 @@ pipeline {
             steps {
                 bat 'python --version'
                 bat 'python -m pip install -r requirements.txt'
-                bat 'python -m pip install pytest'
             }
         }
 
         stage('Run tests') {
             steps {
                 bat 'python -m pytest -v'
+            }
+        }
+
+        stage('Deploy to main') {
+            when {
+                branch 'main'
+            }
+            steps {
+                bat '''
+                    taskkill /F /IM python.exe
+                    start /B python app.py
+                '''
             }
         }
     }
