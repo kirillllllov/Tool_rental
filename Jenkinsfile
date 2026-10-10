@@ -28,7 +28,7 @@ pipeline {
             }
             steps {
                 bat '''
-                    taskkill /F /IM python.exe
+                    taskkill /F /IM python.exe >nul 2>&1 || exit /b 0
                     start /B python app.py
                 '''
             }
