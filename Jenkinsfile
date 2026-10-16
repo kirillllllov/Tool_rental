@@ -1,10 +1,25 @@
+
 pipeline {
     agent any
 
     stages {
-        stage('Checkout') { steps { checkout scm } }
-        stage('Install dependencies') { steps { bat 'python -m pip install -r requirements.txt' } }
-        stage('Run tests') { steps { bat 'python -m pytest -v' } }
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Install dependencies') {
+            steps {
+                bat 'python -m pip install -r requirements.txt'
+            }
+        }
+
+        stage('Run tests') {
+            steps {
+                bat 'python -m pytest -v'
+            }
+        }
 
         stage('Deploy to main') {
             when {
@@ -15,18 +30,47 @@ pipeline {
             }
             steps {
                 bat '''
-                    taskkill /F /IM python.exe >nul 2>&1
+                    echo === Остановка предыдущего экземпляра приложения ===
+
+                    powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+                    "$connections = Get-NetTCPConnection -LocalPort 5000 -State Listen -ErrorAction SilentlyContinue; ^
+                    $connections | ForEach-Object { ^
+                        Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue ^
+                    }"
+
                     powershell -NoProfile -Command "Start-Sleep -Seconds 2"
-                    start "" cmd /c "python app.py > app.log 2>&1"
-                    powershell -NoProfile -Command "Start-Sleep -Seconds 3"
-                    echo Приложение запущено
+
+                    echo === Запуск приложения ===
+
+                    if not exist logs mkdir logs
+
+                    start "" /B cmd /c "python app.py > app.log 2>&1"
+
+                    powershell -NoProfile -Command "Start-Sleep -Seconds 5"
+
+                    powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+                    "$response = Invoke-WebRequest -Uri 'http://127.0.0.1:5000/' -UseBasicParsing -TimeoutSec 10; ^
+                    if ($response.StatusCode -ne 200) { exit 1 }"
+
+                    if errorlevel 1 (
+                        echo ОШИБКА: приложение не ответило на запрос.
+                        type app.log
+                        exit /b 1
+                    )
+
+                    echo === Приложение успешно запущено ===
+                    echo Адрес сайта: http://127.0.0.1:5000
                 '''
             }
         }
     }
 
     post {
-        success { echo 'Сборка и тесты завершились успешно' }
-        failure { echo 'Ошибка сборки или тестирования' }
+        success {
+            echo 'Сборка, тесты и доступность приложения проверены успешно'
+        }
+        failure {
+            echo 'Ошибка сборки, тестирования или запуска приложения'
+        }
     }
 }
