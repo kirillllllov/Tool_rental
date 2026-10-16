@@ -30,6 +30,7 @@ pipeline {
                     powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{CommandLine='cmd /c cd /d C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\tool-rental && python app.py > app.log 2>&1'}"
 
                 '''
+                
             }
         }
     }
