@@ -312,7 +312,7 @@
   <header>
     <a class="brand" href="{{ url_for('dashboard') }}">Строй<span>Аренда</span></a>
     <nav>
-      <a href="{{ url_for('dashboard') }}">Главная страница сайта</a>
+      <a href="{{ url_for('dashboard') }}">Главная</a>
       <a href="{{ url_for('list_records', entity='tools') }}">Инструменты</a>
       <a href="{{ url_for('list_records', entity='categories') }}">Категории</a>
       <a href="{{ url_for('list_records', entity='customers') }}">Клиенты</a>
@@ -326,7 +326,6 @@
     endfor %}{% endif %}
     {% endwith %}
     {% block content %}{% endblock %}
-    <div class="footer">Учебный проект · Flask + SQLite · Система аренды строительных инструментов</div>
   </main>
 </body>
 
