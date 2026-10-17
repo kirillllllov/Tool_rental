@@ -1,16 +1,23 @@
+
 pipeline {
     agent any
 
     stages {
-        stage('Install dependencies') {
+        stage('Checkout') {
             steps {
-                bat 'python -m pip install -r requirements.txt'
+                checkout scm
+            }
+        }
+
+        stage('Build Docker image') {
+            steps {
+                bat 'docker compose build app'
             }
         }
 
         stage('Run tests') {
             steps {
-                bat 'python -m pytest -v'
+                bat 'docker compose run --rm app python -m pytest -v'
             }
         }
 
@@ -18,29 +25,44 @@ pipeline {
             when {
                 expression {
                     def b = env.GIT_BRANCH ?: env.BRANCH_NAME ?: ''
-                    return b == 'main' || b == 'origin/main'
+                    return b == 'main' ||
+                           b == 'origin/main' ||
+                           b == 'refs/heads/main'
                 }
             }
+
             steps {
+                bat 'docker compose up -d --build'
+
                 bat '''
-                    echo Остановка предыдущего экземпляра приложения
-                    powershell -NoProfile -ExecutionPolicy Bypass -Command "$connections = Get-NetTCPConnection -LocalPort 5000 -State Listen -ErrorAction SilentlyContinue; $connections | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }"
+                    echo Проверка доступности сайта через Nginx
 
-                    echo Запуск приложения
-                    powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{CommandLine='cmd /c cd /d C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\tool-rental && python app.py > app.log 2>&1'}"
+                    powershell -NoProfile -ExecutionPolicy Bypass -Command "$ok = $false; for ($i = 0; $i -lt 15; $i++) { try { $r = Invoke-WebRequest -Uri 'http://127.0.0.1/' -UseBasicParsing -TimeoutSec 3; if ($r.StatusCode -eq 200) { $ok = $true; break } } catch {}; Start-Sleep -Seconds 2 }; if (-not $ok) { exit 1 }"
 
+                    if errorlevel 1 (
+                        echo ОШИБКА: сайт не отвечает.
+                        docker compose ps
+                        docker compose logs --tail=100
+                        exit /b 1
+                    )
+
+                    echo Сайт успешно запущен: http://localhost
                 '''
-                
             }
         }
     }
 
     post {
         success {
-            echo 'Сборка, тесты и доступность приложения проверены успешно'
+            echo 'Сборка и тесты завершены успешно. Если собиралась main, приложение развернуто.'
         }
+
         failure {
-            echo 'Ошибка сборки, тестирования или запуска приложения'
+            echo 'Ошибка сборки, тестирования или развертывания.'
+        }
+
+        always {
+            echo 'Pipeline завершён.'
         }
     }
 }
