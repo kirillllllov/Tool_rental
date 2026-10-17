@@ -4,7 +4,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: tool-rental-app
     restart: unless-stopped
     volumes:
       - ./instance:/app/instance
@@ -23,7 +22,6 @@ services:
 
   nginx:
     image: nginx:alpine
-    container_name: tool-rental-nginx
     restart: unless-stopped
     ports:
       - "80:80"
