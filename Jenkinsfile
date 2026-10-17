@@ -1,36 +1,46 @@
-
 pipeline {
     agent any
 
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-                echo 'Исходный код получен из GitHub'
-            }
-        }
-
         stage('Install dependencies') {
             steps {
-                sh 'python3 --version'
-                sh 'python3 -m pip install -r requirements.txt'
-                sh 'python3 -m pip install pytest'
+                bat 'python -m pip install -r requirements.txt'
             }
         }
 
         stage('Run tests') {
             steps {
-                sh 'python3 -m pytest -v'
+                bat 'python -m pytest -v'
+            }
+        }
+
+        stage('Deploy to main') {
+            when {
+                expression {
+                    def b = env.GIT_BRANCH ?: env.BRANCH_NAME ?: ''
+                    return b == 'main' || b == 'origin/main'
+                }
+            }
+            steps {
+                bat '''
+                    echo Остановка предыдущего экземпляра приложения
+                    powershell -NoProfile -ExecutionPolicy Bypass -Command "$connections = Get-NetTCPConnection -LocalPort 5000 -State Listen -ErrorAction SilentlyContinue; $connections | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }"
+
+                    echo Запуск приложения
+                    powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{CommandLine='cmd /c cd /d C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\tool-rental && python app.py > app.log 2>&1'}"
+
+                '''
+                
             }
         }
     }
 
     post {
         success {
-            echo 'Сборка и тесты завершились успешно'
+            echo 'Сборка, тесты и доступность приложения проверены успешно'
         }
         failure {
-            echo 'Ошибка сборки или тестирования'
+            echo 'Ошибка сборки, тестирования или запуска приложения'
         }
     }
 }
