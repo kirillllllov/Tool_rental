@@ -1,6 +1,11 @@
-
 pipeline {
     agent any
+
+    environment {
+        DOCKER_HUB_USER = 'koptelovkir535363'
+        IMAGE_NAME      = 'tool-rental-app'
+        DOCKER_CREDS_ID = 'docker-hub-credentials'
+    }
 
     stages {
         stage('Checkout') {
@@ -9,15 +14,29 @@ pipeline {
             }
         }
 
-        stage('Build Docker image') {
-            steps {
-                bat 'docker compose build app'
-            }
-        }
-
         stage('Run tests') {
             steps {
                 bat 'docker compose run --rm app python -m pytest -v'
+            }
+        }
+
+        stage('Build Docker image') {
+            steps {
+                bat 'docker compose build app'
+
+                // Тегируем под Docker Hub: уникальный тег сборки + latest
+                bat "docker tag ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest ${DOCKER_HUB_USER}/${IMAGE_NAME}:${env.BUILD_NUMBER}"
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: DOCKER_CREDS_ID, url: '') {
+                        bat "docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:${env.BUILD_NUMBER}"
+                        bat "docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
+                    }
+                }
             }
         }
 
@@ -54,13 +73,11 @@ pipeline {
 
     post {
         success {
-            echo 'Сборка и тесты завершены успешно. Если собиралась main, приложение развернуто.'
+            echo 'Тесты, сборка и пуш в Docker Hub завершены успешно. Если собиралась main, приложение развернуто.'
         }
-
         failure {
-            echo 'Ошибка сборки, тестирования или развертывания.'
+            echo 'Ошибка тестирования, сборки, пуша или развертывания.'
         }
-
         always {
             echo 'Pipeline завершён.'
         }

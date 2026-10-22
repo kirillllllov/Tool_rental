@@ -1,9 +1,9 @@
-
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
+    image: koptelovkir535363/tool-rental-app:latest   # ← добавили эту строку
     restart: unless-stopped
     volumes:
       - ./instance:/app/instance
