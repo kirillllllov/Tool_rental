@@ -2,23 +2,19 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_CREDENTIALS_ID = 'docker-hub-credentials'         // ID из шага 2
-        IMAGE_NAME            = 'koptelovkir535363/tool-rental'       // ваш образ
-        IMAGE_TAG             = "${env.BUILD_NUMBER}"            // уникальный тег на каждую сборку
+        DOCKER_CREDENTIALS_ID = 'docker-hub-credentials'
+        IMAGE_NAME            = 'koptelovkir535363/tool-rental-backend'
+        IMAGE_TAG             = "${env.BUILD_NUMBER}"
     }
 
     stages {
         stage('Checkout') {
-            steps {
-                checkout scm
-            }
+            steps { checkout scm }
         }
 
         stage('Build Docker image') {
             steps {
-                // Собираем и тегируем образ сразу двумя тегами:
-                // latest — для удобства, BUILD_NUMBER — для отката
-                bat "docker build -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} -t ${env.IMAGE_NAME}:latest ."
+                bat "docker build -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} ."
             }
         }
 
@@ -39,7 +35,6 @@ pipeline {
                 script {
                     docker.withRegistry('https://registry.hub.docker.com', env.DOCKER_CREDENTIALS_ID) {
                         docker.image("${env.IMAGE_NAME}:${env.IMAGE_TAG}").push()
-                        docker.image("${env.IMAGE_NAME}:latest").push()
                     }
                 }
             }
@@ -53,10 +48,6 @@ pipeline {
                 }
             }
             steps {
-                // Теперь поднимаем уже существующий образ с Docker Hub,
-                // а не пересобираем локально — гарантирует, что на сервере
-                // работает именно то, что запушено
-                bat "docker compose pull app"
                 bat 'docker compose up -d'
 
                 bat '''
@@ -78,8 +69,8 @@ pipeline {
     }
 
     post {
-        success { echo 'Сборка, тесты и деплой завершены успешно.' }
-        failure { echo 'Ошибка сборки, тестирования или развертывания.' }
+        success { echo 'Сборка, тесты, push и деплой завершены успешно.' }
+        failure { echo 'Ошибка на одном из этапов.' }
         always  { echo 'Pipeline завершён.' }
     }
 }
