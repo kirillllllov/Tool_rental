@@ -3,7 +3,7 @@
 {% block content %}
 <div class="page-head"><div><h1>Система аренды строительных инструментов</h1><p class="muted">Управляйте каталогом, клиентами, арендой и техническим обслуживанием.</p></div><a class="btn" href="{{ url_for('create_record', entity='rentals') }}">＋ Новая аренда</a></div>
 <div class="stats">
-  <div class="stat"><small>Всего  инструментов</small><strong>{{ stats.tools }}</strong></div>
+  <div class="stat"><small>Всего инструментов</small><strong>{{ stats.tools }}</strong></div>
   <div class="stat"><small>Доступно для аренды</small><strong>{{ stats.available }}</strong></div>
   <div class="stat"><small>Клиентов</small><strong>{{ stats.customers }}</strong></div>
   <div class="stat"><small>Активных аренд</small><strong>{{ stats.active_rentals }}</strong></div>
