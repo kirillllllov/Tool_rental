@@ -9,7 +9,7 @@
   <div class="stat"><small>Активных аренд</small><strong>{{ stats.active_rentals }}</strong></div>
 </div>
 <div class="panel">
-  <div class="page-head"><h2>Последние  аренды</h2><a class="btn secondary" href="{{ url_for('list_records', entity='rentals') }}">Все аренды</a></div>
+  <div class="page-head"><h2>Последние аренды</h2><a class="btn secondary" href="{{ url_for('list_records', entity='rentals') }}">Все аренды</a></div>
   {% if recent %}
   <div class="table-wrap"><table><thead><tr><th>Инструмент</th><th>Клиент</th><th>Период</th><th>Статус</th></tr></thead><tbody>
   {% for row in recent %}<tr><td>{{ row.tool_name }}</td><td>{{ row.customer_name }}</td><td>{{ row.start_date }} — {{ row.end_date }}</td><td><span class="pill">{{ row.status }}</span></td></tr>{% endfor %}
