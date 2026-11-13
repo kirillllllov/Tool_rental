@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: tool-rental
+  template:
+    metadata:
+      labels:
+        app: tool-rental
+    spec:
+      containers:
+        - name: app
+          image: koptelovkir535363/tool-rental-backend:20
+          ports:
+            - containerPort: 5000
+          volumeMounts:
+            - name: instance
+              mountPath: /app/instance
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+      volumes:
+        - name: instance
+          persistentVolumeClaim:
+            claimName: app-instance-pvc
